@@ -23,11 +23,10 @@ To get started with **Con-Kafka-API**, you need to have a running Kafka cluster.
 
 ## Installation
 
-1. package the jar:
+```bash
+sbt clean assembly
+```
 
-   ```bash
-   sbt clean assembly
-   ```
 ## Running-App
 
  ```bash
