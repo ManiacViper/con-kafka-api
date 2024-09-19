@@ -17,7 +17,7 @@ class HelloWorldSpec extends CatsEffectSuite {
 
   private[this] val retHelloWorld: IO[Response[IO]] = {
     val getHW = Request[IO](Method.GET, uri"/hello/world")
-    val helloWorld = HelloWorld.impl[IO]
-    ConkafkaapiRoutes.helloWorldRoutes(helloWorld).orNotFound(getHW)
+    val helloWorld = PeopleQueryService.impl[IO]
+    ApiRoutes.kafkaRoutes(helloWorld).orNotFound(getHW)
   }
 }
