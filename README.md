@@ -6,8 +6,7 @@
 - [Getting Started](#getting-started)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Configuration](#configuration)
-- [Running app](#usage)
+- [Running app](#running-app)
 - [Running Tests](#running-tests)
 
 ## Getting Started
@@ -24,9 +23,13 @@ To get started with **Con-Kafka-API**, you need to have a running Kafka cluster.
 
 ## Installation
 
-1. Clone the repository:
+1. package the jar:
 
    ```bash
-   git clone https://github.com/your-username/con-kafka-api.git
-   cd con-kafka-api
+   sbt clean assembly
    ```
+## Running-App
+
+ ```bash
+   sbt run
+ ```
