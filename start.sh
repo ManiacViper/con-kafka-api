@@ -1,8 +1,8 @@
 #!/bin/bash
 # Stop and remove the existing container if it exists
 if [ $(docker ps -aq -f name=kafka-people) ]; then
-    sudo docker stop kafka-people
-    sudo docker rm kafka-people
+    docker stop kafka-people
+    docker rm kafka-people
 fi
 docker run --name kafka-people -p 9092:9092 apache/kafka:3.7.0 > kafka.log 2>&1 &
 sleep 5
