@@ -46,7 +46,7 @@ object PersonSpec {
                                   | "address": {
                                   | "street": "2745 Shaftsbury Circle",
                                   | "town": "Slough",
-                                  | "postcode": "LS67 1ID"
+                                  | "postode": "LS67 1ID"
                                   | },
                                   | "telephone": "+39-3380-033-155",
                                   | "pets": [
