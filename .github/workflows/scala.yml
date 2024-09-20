@@ -1,0 +1,40 @@
+name: Scala CI
+
+on:
+  push:
+    branches:
+      - '*'  # This includes all branches
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: List files
+        run: ls -R
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+
+      - name: Cache SBT
+        uses: actions/cache@v3
+        with:
+          path: ~/.sbt
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/*.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+
+      - name: clean
+        run: sbt clean
+
+      - name: test
+        run: sbt test
+
+      - name: assemble
+        run: sbt assembly
