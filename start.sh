@@ -1,4 +1,12 @@
-docker run -p 9092:9092 apache/kafka:3.7.0
-docker exec kafka kafka-topics.sh --create --topic people --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1 --config cleanup.policy=delete
-docker exec kafka kafka-topics.sh --list --bootstrap-server localhost:9092
-sbt run
+#!/bin/bash
+# Stop and remove the existing container if it exists
+if [ $(docker ps -aq -f name=kafka-people) ]; then
+    sudo docker stop kafka-people
+    sudo docker rm kafka-people
+fi
+docker run --name kafka-people -p 9092:9092 apache/kafka:3.7.0 > kafka.log 2>&1 &
+sleep 5
+docker exec -it kafka-people /opt/kafka/bin/kafka-topics.sh --create --topic people --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1 --config cleanup.policy=delete
+docker exec -it kafka-people /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+sleep 5
+#sbt run
