@@ -8,6 +8,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import io.circe.parser._
+import io.circe.generic.auto._
 
 class PersonSpec extends AnyWordSpec with Matchers {
 
