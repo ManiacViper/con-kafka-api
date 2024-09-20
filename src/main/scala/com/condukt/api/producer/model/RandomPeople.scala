@@ -1,3 +1,3 @@
 package com.condukt.api.producer.model
 
-case class RandomPeople(ctRoot: List[Person])
+final case class RandomPeople(ctRoot: List[Person])
