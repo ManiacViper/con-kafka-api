@@ -11,6 +11,14 @@ import java.nio.file.NoSuchFileException
 import scala.io.Source
 
 object PeopleFileReader {
+  /*
+    if this was part of the production app where it populated the topic before starting, i would do the below,
+    this takes the whole list in memory, would be looking to send each person record decoded and then load the next person record
+    this way we reduce memory usage by the app significantly
+
+    Would need to accumulate lines until we hit comma most likely to indicate a complete person record
+    also the final person record might need special handling to say if it has } and then ] that's a complete person record  
+   */
   def apply[F[_] : Sync](filePath: String): F[List[Person]] = {
     val maybeResourceStream = Option(getClass.getClassLoader.getResourceAsStream(filePath))
     val fileContent = maybeResourceStream match {
