@@ -12,4 +12,4 @@ sleep 5
 docker exec -it kafka-people /opt/kafka/bin/kafka-topics.sh --create --topic people --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1 --config cleanup.policy=delete
 docker exec -it kafka-people /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092
 sleep 5
-#sbt run
+sbt run
