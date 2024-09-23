@@ -6,6 +6,7 @@ import io.circe.generic.auto._
 
 import java.time.LocalDate
 
+// this is used everywhere right now, we could have seperate dto record case class for kafka and a case class for the rest api response
 final case class Person(
                          _id: String,
                          name: String,
