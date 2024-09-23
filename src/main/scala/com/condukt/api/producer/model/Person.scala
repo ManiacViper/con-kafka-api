@@ -1,5 +1,9 @@
 package com.condukt.api.producer.model
 
+import org.http4s.EntityEncoder
+import org.http4s.circe.jsonEncoderOf
+import io.circe.generic.auto._
+
 import java.time.LocalDate
 
 final case class Person(
@@ -16,3 +20,7 @@ final case class Person(
                          verified: Boolean,
                          salary: Int
                  )
+object Person {
+  implicit def greetingEntityEncoder[F[_]]: EntityEncoder[F, List[Person]] =
+    jsonEncoderOf[F, List[Person]]
+}

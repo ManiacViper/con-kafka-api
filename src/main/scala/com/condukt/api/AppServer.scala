@@ -30,13 +30,13 @@ object AppServer {
       _ = new DefaultRandomPeopleService[F](peopleProducer).populateTopic(people, topic)
       _ = logger.info(s"records sent to topic: ${topic}")
       _ <- EmberClientBuilder.default[F].build
-      helloWorldAlg = PeopleQueryService.impl[F]
+      peopleQueryService = PeopleQueryService.default[F]
       // Combine Service Routes into an HttpApp.
       // Can also be done via a Router if you
       // want to extract segments not checked
       // in the underlying routes.
       httpApp = (
-        ApiRoutes.kafkaRoutes[F](helloWorldAlg)
+        ApiRoutes.kafkaRoutes[F](peopleQueryService)
         ).orNotFound
 
       // With Middlewares in place
