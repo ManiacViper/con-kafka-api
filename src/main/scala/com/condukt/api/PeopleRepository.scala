@@ -2,13 +2,12 @@ package com.condukt.api
 
 import cats.effect.Sync
 import com.condukt.api.producer.model.Person
-import org.apache.kafka.common.{PartitionInfo, TopicPartition}
+import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.clients.consumer.KafkaConsumer
 
 import java.time.Duration
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
-import scala.util.{Failure, Success, Try}
 
 trait PeopleRepository[F[_]] {
   def getPeople(topicName: String, offset: Long, count: Int): F[Seq[Person]]
@@ -18,28 +17,22 @@ class KafkaPeopleRepository[F[_]: Sync](kafkaConsumer: KafkaConsumer[String, Per
 
   override def getPeople(topicName: String, offset: Long, count: Int): F[Seq[Person]] =
     Sync[F].delay {
-      val partitions = kafkaConsumer.partitionsFor(topicName).asScala.toList
-      getPeopleFromTopic(partitions, topicName, offset, count)
+      val allPartitions =
+        kafkaConsumer
+          .partitionsFor(topicName)
+          .asScala
+          .toList
+          .map(partitionInfo => new TopicPartition(topicName, partitionInfo.partition()))
+
+      kafkaConsumer.assign(allPartitions.asJava)
+
+      allPartitions
+        .foreach { partitionInfo =>
+          val topicPartition = new TopicPartition(topicName, partitionInfo.partition())
+          kafkaConsumer.seek(topicPartition, offset)
+        }
+      handleRetrieval(Seq.empty, offset, count)
     }
-
-  private def getPeopleFromTopic(partitions: Seq[PartitionInfo], topicName: String, offset: Long, count: Int): Seq[Person] = {
-    val allTopicPartitions = partitions
-      .map { partitionInfo =>
-        new TopicPartition(topicName, partitionInfo.partition())
-      }.toList
-
-     Try(kafkaConsumer.assign(allTopicPartitions.asJava)) match {
-       case Success(_) =>
-         allTopicPartitions
-           .foreach { partition =>
-             kafkaConsumer.seek(partition, offset) //starts the offset from the same position for each partition
-           }
-         handleRetrieval(Seq.empty, offset, count) //then retrieve from offset start
-       case Failure(_) =>
-         Seq.empty
-     }
-
-  }
 
   @tailrec
   private def handleRetrieval(recordsSoFar: Seq[Person], offset: Long, count: Int): Seq[Person] = {

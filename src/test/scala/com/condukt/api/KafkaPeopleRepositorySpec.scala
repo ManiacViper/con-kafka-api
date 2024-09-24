@@ -76,6 +76,17 @@ class KafkaPeopleRepositorySpec extends AnyWordSpec with Matchers {
         }
       }
 
+      "topic does not exist" in {
+        val expected = List.empty
+        val topicNameToBeCreated = s"people-${UUID.randomUUID()}"
+        val incorrectTopic = "incorrectTopic"
+        withKafka(topicNameToBeCreated, expected) { consumer =>
+          val repository = new KafkaPeopleRepository[IO](consumer)
+          val result = repository.getPeople(incorrectTopic, 0, 1).unsafeRunSync()
+          result.map(_._id) mustBe List.empty
+        }
+      }
+
       "offset is more than records in the topic" in {
         val firstPerson = PersonSpec.defaultPerson.copy(_id = "1")
         val secondPerson = PersonSpec.defaultPerson.copy(_id = "2")
