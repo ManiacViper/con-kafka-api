@@ -85,7 +85,7 @@ object RandomPeopleServiceSpec {
           .use { client =>
             for {
               _                 <- createTopic(client, topic)
-              producerResource  = RandomPeopleProducerFactory[IO](container.bootstrapServers)
+              producerResource  = PersonProducer[IO](container.bootstrapServers)
               result            <- producerResource.use(producer => IO(testFn(producer)))
               _                 <- IO(container.stop())
             } yield result

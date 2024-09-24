@@ -1,8 +1,8 @@
-package com.condukt.api
+package com.condukt.api.consumer
 
-import cats.effect.{IO, Resource}
 import cats.effect.unsafe.implicits.global
-import com.condukt.api.KafkaPeopleRepositorySpec._
+import cats.effect.{IO, Resource}
+import com.condukt.api.consumer.KafkaPeopleRepositorySpec.withKafka
 import com.condukt.api.producer.model.{Person, PersonDeserializer, PersonSerializer, PersonSpec}
 import com.dimafeng.testcontainers.KafkaContainer
 import org.apache.kafka.clients.admin.{AdminClient, AdminClientConfig, NewTopic}

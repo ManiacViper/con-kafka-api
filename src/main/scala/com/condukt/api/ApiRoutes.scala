@@ -15,7 +15,7 @@ object ApiRoutes {
     import dsl._
     object Count extends OptionalQueryParamDecoderMatcher[Int]("count")
 
-    def getPeople(topicName: String, offset: Int, count: Int): F[Response[F]] = {
+    def getPeople(topicName: String, offset: Long, count: Int): F[Response[F]] = {
       println(s"[offset=$offset, count=$count]")
       logger.info(s"[offset=$offset, count=$count]")
       for {
@@ -24,8 +24,9 @@ object ApiRoutes {
       } yield resp
     }
 
+    //havent done any bad request validation, returns 404 when string is passed for either or both path and query param
     HttpRoutes.of[F] {
-      case GET -> Root / "topic" / topic_name / IntVar(offset) :? Count(count) =>
+      case GET -> Root / "topic" / topic_name / LongVar(offset) :? Count(count) =>
         count match {
           case Some(count) =>
             getPeople(topic_name, offset, count)

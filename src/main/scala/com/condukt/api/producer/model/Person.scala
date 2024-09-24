@@ -22,6 +22,6 @@ final case class Person(
                          salary: Int
                  )
 object Person {
-  implicit def greetingEntityEncoder[F[_]]: EntityEncoder[F, List[Person]] =
-    jsonEncoderOf[F, List[Person]]
+  implicit def greetingEntityEncoder[F[_]]: EntityEncoder[F, Seq[Person]] =
+    jsonEncoderOf[F, Seq[Person]]
 }

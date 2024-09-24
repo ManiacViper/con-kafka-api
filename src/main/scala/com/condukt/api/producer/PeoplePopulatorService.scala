@@ -31,7 +31,7 @@ class DefaultPeoplePopulatorService[F[_]: Sync](producer: KafkaProducer[String, 
 
 }
 
-object RandomPeopleProducerFactory {
+object PersonProducer {
   def apply[F[_]: Sync](broker: String): Resource[F, KafkaProducer[String, Person]] = {
     val props = new Properties()
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, broker)
