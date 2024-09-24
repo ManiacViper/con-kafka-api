@@ -15,23 +15,82 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.slf4j.{Logger, LoggerFactory}
 import org.testcontainers.utility.DockerImageName
 
-import java.util.Properties
+import java.util.{Properties, UUID}
 
 class KafkaPeopleRepositorySpec extends AnyWordSpec with Matchers {
 
   "KafkaPeopleRepository.getPeople" should {
     "return people" when {
-      "they exist as records in the topic" in {
-        val secondPerson = PersonSpec.defaultPerson.copy("2222222222222222")
-        val thirdPerson = PersonSpec.defaultPerson.copy("333333333333333")
-        val people = List(PersonSpec.defaultPerson, secondPerson, thirdPerson)
-        withKafka(people) { (adminClient, consumer) =>
-          val repository = new KafkaPeopleRepository[IO](adminClient, consumer)
-          val result = repository.getPeople("people", 1, 2).unsafeRunSync()
-          result mustBe List(secondPerson, thirdPerson)
+      "the offset and count wants the 2nd and 3rd records" in {
+        val firstPerson = PersonSpec.defaultPerson.copy(_id = "1")
+        val secondPerson = PersonSpec.defaultPerson.copy(_id = "2")
+        val thirdPerson = PersonSpec.defaultPerson.copy(_id ="3")
+        val fourthPerson = PersonSpec.defaultPerson.copy(_id ="4")
+        val fifthPerson = PersonSpec.defaultPerson.copy(_id ="5")
+        val people = List(firstPerson, secondPerson, thirdPerson, fourthPerson, fifthPerson)
+        val topicName = s"people-${UUID.randomUUID()}"
+        withKafka(topicName, people) { consumer =>
+          val repository = new KafkaPeopleRepository[IO](consumer)
+          val result = repository.getPeople(topicName, 1, 2).unsafeRunSync()
+          result.map(_._id) must contain theSameElementsAs List("5", "3")
+        }
+      }
+
+      "exactly all records in topic are asked for" in {
+        val firstPerson = PersonSpec.defaultPerson.copy(_id ="6")
+        val secondPerson = PersonSpec.defaultPerson.copy(_id ="7")
+        val thirdPerson = PersonSpec.defaultPerson.copy(_id ="8")
+        val fourthPerson = PersonSpec.defaultPerson.copy(_id ="9")
+        val expected = List(firstPerson, secondPerson, thirdPerson, fourthPerson)
+        val topicName = s"people-${UUID.randomUUID()}"
+        withKafka(topicName, expected) { consumer =>
+          val repository = new KafkaPeopleRepository[IO](consumer)
+          val result = repository.getPeople(topicName, 0, 4).unsafeRunSync()
+          result.map(_._id) must contain theSameElementsAs expected.map(_._id)
+        }
+      }
+
+      "there are less records than count" in {
+        val firstPerson = PersonSpec.defaultPerson.copy(_id = "10")
+        val secondPerson = PersonSpec.defaultPerson.copy(_id = "11")
+        val thirdPerson = PersonSpec.defaultPerson.copy(_id = "12")
+        val fourthPerson = PersonSpec.defaultPerson.copy(_id = "13")
+        val expected = List(firstPerson, secondPerson, thirdPerson, fourthPerson)
+        val topicName = s"people-${UUID.randomUUID()}"
+        withKafka(topicName, expected) { consumer =>
+          val repository = new KafkaPeopleRepository[IO](consumer)
+          val result = repository.getPeople(topicName, 0, 5).unsafeRunSync()
+          result.map(_._id) must contain theSameElementsAs expected.map(_._id)
         }
       }
     }
+
+    "return empty list" when {
+      "there are no records" in {
+        val expected = List.empty
+        val topicName = s"people-${UUID.randomUUID()}"
+        withKafka(topicName, expected) { consumer =>
+          val repository = new KafkaPeopleRepository[IO](consumer)
+          val result = repository.getPeople(topicName, 0, 1).unsafeRunSync()
+          result.map(_._id) mustBe List.empty
+        }
+      }
+
+      "offset is more than records in the topic" in {
+        val firstPerson = PersonSpec.defaultPerson.copy(_id = "1")
+        val secondPerson = PersonSpec.defaultPerson.copy(_id = "2")
+        val thirdPerson = PersonSpec.defaultPerson.copy(_id = "3")
+        val fourthPerson = PersonSpec.defaultPerson.copy(_id = "4")
+        val expected = List(firstPerson, secondPerson, thirdPerson, fourthPerson)
+        val topicName = s"people-${UUID.randomUUID()}"
+        withKafka(topicName, expected) { consumer =>
+          val repository = new KafkaPeopleRepository[IO](consumer)
+          val result = repository.getPeople(topicName, 5, 1).unsafeRunSync()
+          result.map(_._id) mustBe List.empty
+        }
+      }
+    }
+
   }
 }
 
@@ -39,7 +98,7 @@ object KafkaPeopleRepositorySpec {
 
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  def withKafka(people: List[Person])(testFn: (AdminClient, KafkaConsumer[String, Person]) => Assertion): Unit =
+  def withKafka(topic: String, people: List[Person])(testFn: (KafkaConsumer[String, Person]) => Assertion): Unit =
     containerResource()
       .flatMap { container =>
         for {
@@ -48,11 +107,10 @@ object KafkaPeopleRepositorySpec {
           _ = logger.info("container started")
           producer <- testProducer(container.bootstrapServers)
           client <- testAdminClientResource(container.bootstrapServers)
-          topic = "people"
           _ <- Resource.eval(createTestTopic(client, topic))
           _ <- Resource.eval(populateTopic(topic, people, producer))
           consumer <- testConsumer(container.bootstrapServers)
-          _ <- Resource.eval(IO(testFn(client, consumer)))
+          _ <- Resource.eval(IO(testFn(consumer)))
         } yield ()
       }
       .use { _ =>
@@ -80,7 +138,6 @@ object KafkaPeopleRepositorySpec {
       val props = new Properties()
       props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
       props.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, "500")
-
       AdminClient.create(props)
     }
   }(client => IO(client.close()))
