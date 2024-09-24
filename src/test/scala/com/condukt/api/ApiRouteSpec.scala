@@ -2,6 +2,8 @@ package com.condukt.api
 
 import cats.effect.IO
 import com.condukt.api.ApiRouteSpec.mockPeopleJsonString
+import com.condukt.api.consumer.PeopleRepository
+import com.condukt.api.producer.model.{Person, PersonSpec}
 import io.circe.Json
 import io.circe.parser.parse
 import org.http4s._
@@ -16,14 +18,19 @@ class ApiRouteSpec extends CatsEffectSuite {
 
   test("topic returns hello people message") {
     val Right(expected) = parse(mockPeopleJsonString)
-
     def actual(value: String) = parse(value).getOrElse(Json.Null)
+
     assertIO(retHelloWorld.flatMap(_.as[String].map(actual)), expected)
   }
 
   private[this] val retHelloWorld: IO[Response[IO]] = {
     val getPeople = Request[IO](Method.GET, uri"/topic/people/10?count=5")
-    val service = PeopleQueryService.default[IO]
+    val mockPeopleResult = List(PersonSpec.defaultPerson, PersonSpec.defaultPerson.copy(_id = "111YCC2THQH1QAEH"))
+    val repositoryStub = new PeopleRepository[IO]{
+      override def getPeople(topicName: String, offset: Long, count: Int): IO[Seq[Person]] =
+        IO(mockPeopleResult)
+    }
+    val service = PeopleQueryService.default[IO](peopleRepository = repositoryStub)
     ApiRoutes.kafkaRoutes(service).orNotFound(getPeople)
   }
 }

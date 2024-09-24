@@ -33,6 +33,7 @@ class PersonSpec extends AnyWordSpec with Matchers {
 }
 
 object PersonSpec {
+  // below is being used in most tests, maybe having a seperate test class that holds the values and also the json values might be useful to indicate defaultPerson is commonly used in testing
   val defaultPerson: Person =
     Person(_id = "368YCC2THQH1HEAQ", name = "Kiana Yoo",
           dob = LocalDate.parse("2021-05-31", DateTimeFormatter.ISO_LOCAL_DATE),

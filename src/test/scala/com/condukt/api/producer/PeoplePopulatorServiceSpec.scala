@@ -21,23 +21,23 @@ import java.util.{Properties, UUID}
 import scala.jdk.CollectionConverters._
 
 //would reduce the time taken for tests, stopping container only after all the tests are run
-class RandomPeopleServiceSpec extends AnyWordSpec with Matchers {
+class PeoplePopulatorServiceSpec extends AnyWordSpec with Matchers {
 
   val container: KafkaContainer = KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.7.0"))
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  "RandomPeopleService.populateTopic" should {
+  "PeoplePopulatorService.populateTopic" should {
     "populate with list of people" when {
       "the list is provided" in {
         val topicName = s"people-${UUID.randomUUID()}"
         val secondPerson = defaultPerson.copy(_id = "168YCC2THQH1HEAB")
-        val records = List(defaultPerson, secondPerson)
+        val expected = List(defaultPerson, secondPerson)
 
         withKafka(container, topicName) { producer =>
-          new DefaultRandomPeopleService[IO](producer).populateTopic(records, topicName).unsafeRunSync()
-          val noOfMessages = readMessages(container.bootstrapServers, topicName).unsafeRunSync()
+          new DefaultPeoplePopulatorService[IO](producer).populateTopic(expected, topicName).unsafeRunSync()
+          val result = readMessages(container.bootstrapServers, topicName).unsafeRunSync()
 
-          noOfMessages must contain theSameElementsAs records
+          result must contain theSameElementsAs expected
         }
       }
     }
@@ -48,9 +48,9 @@ class RandomPeopleServiceSpec extends AnyWordSpec with Matchers {
         val emptyRecords = List.empty
 
         withKafka(container, topicName) { producer =>
-          new DefaultRandomPeopleService[IO](producer).populateTopic(emptyRecords, topicName).unsafeRunSync()
-          val noOfMessages = readMessages(container.bootstrapServers, topicName).unsafeRunSync().size
-          noOfMessages mustBe 0
+          new DefaultPeoplePopulatorService[IO](producer).populateTopic(emptyRecords, topicName).unsafeRunSync()
+          val result = readMessages(container.bootstrapServers, topicName).unsafeRunSync()
+          result mustBe emptyRecords
         }
       }
     }
@@ -85,7 +85,7 @@ object RandomPeopleServiceSpec {
           .use { client =>
             for {
               _                 <- createTopic(client, topic)
-              producerResource  = RandomPeopleProducerFactory[IO](container.bootstrapServers)
+              producerResource  = PersonProducer[IO](container.bootstrapServers)
               result            <- producerResource.use(producer => IO(testFn(producer)))
               _                 <- IO(container.stop())
             } yield result
