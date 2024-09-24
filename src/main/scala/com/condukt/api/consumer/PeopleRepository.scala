@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory
 import java.time.Duration
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
+import cats.syntax.flatMap._
 
 trait PeopleRepository[F[_]] {
   def getPeople(topicName: String, offset: Long, count: Int): F[Seq[Person]]
@@ -19,7 +20,7 @@ class KafkaPeopleRepository[F[_]: Sync](kafkaConsumer: KafkaConsumer[String, Per
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   override def getPeople(topicName: String, offset: Long, count: Int): F[Seq[Person]] =
-    Sync[F].delay {
+    Sync[F].blocking {
       val allPartitions =
         kafkaConsumer
           .partitionsFor(topicName)
@@ -34,7 +35,9 @@ class KafkaPeopleRepository[F[_]: Sync](kafkaConsumer: KafkaConsumer[String, Per
           val topicPartition = new TopicPartition(topicName, partitionInfo.partition())
           kafkaConsumer.seek(topicPartition, offset)
         }
-      handleRetrieval(Seq.empty, offset, count)
+
+    }.flatMap { _ =>
+      Sync[F].blocking(handleRetrieval(Seq.empty, offset, count))
     }
 
   @tailrec

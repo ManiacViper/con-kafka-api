@@ -31,13 +31,13 @@ class PeoplePopulatorServiceSpec extends AnyWordSpec with Matchers {
       "the list is provided" in {
         val topicName = s"people-${UUID.randomUUID()}"
         val secondPerson = defaultPerson.copy(_id = "168YCC2THQH1HEAB")
-        val records = List(defaultPerson, secondPerson)
+        val expected = List(defaultPerson, secondPerson)
 
         withKafka(container, topicName) { producer =>
-          new DefaultPeoplePopulatorService[IO](producer).populateTopic(records, topicName).unsafeRunSync()
-          val noOfMessages = readMessages(container.bootstrapServers, topicName).unsafeRunSync()
+          new DefaultPeoplePopulatorService[IO](producer).populateTopic(expected, topicName).unsafeRunSync()
+          val result = readMessages(container.bootstrapServers, topicName).unsafeRunSync()
 
-          noOfMessages must contain theSameElementsAs records
+          result must contain theSameElementsAs expected
         }
       }
     }
@@ -49,8 +49,8 @@ class PeoplePopulatorServiceSpec extends AnyWordSpec with Matchers {
 
         withKafka(container, topicName) { producer =>
           new DefaultPeoplePopulatorService[IO](producer).populateTopic(emptyRecords, topicName).unsafeRunSync()
-          val noOfMessages = readMessages(container.bootstrapServers, topicName).unsafeRunSync().size
-          noOfMessages mustBe 0
+          val result = readMessages(container.bootstrapServers, topicName).unsafeRunSync()
+          result mustBe emptyRecords
         }
       }
     }
