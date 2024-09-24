@@ -2,7 +2,7 @@ package com.condukt.api
 
 import cats.effect.{Async, Resource}
 import com.comcast.ip4s._
-import com.condukt.api.producer.{DefaultRandomPeopleService, PeopleFileReader, RandomPeopleProducerFactory}
+import com.condukt.api.producer.{DefaultPeoplePopulatorService, PeopleFileReader, RandomPeopleProducerFactory}
 import com.condukt.api.producer.model.Person
 import fs2.io.net.Network
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -27,7 +27,7 @@ object AppServer {
       peopleProducer: KafkaProducer[String, Person] <- RandomPeopleProducerFactory(kafkaBootstrapServers)
       people <- Resource.eval(PeopleFileReader[F](filePath))
       _ = logger.info(s"read file, there are ${people.size} records")
-      _ = new DefaultRandomPeopleService[F](peopleProducer).populateTopic(people, topic)
+      _ = new DefaultPeoplePopulatorService[F](peopleProducer).populateTopic(people, topic)
       _ = logger.info(s"records sent to topic: ${topic}")
       _ <- EmberClientBuilder.default[F].build
       peopleQueryService = PeopleQueryService.default[F]

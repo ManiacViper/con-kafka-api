@@ -21,12 +21,12 @@ import java.util.{Properties, UUID}
 import scala.jdk.CollectionConverters._
 
 //would reduce the time taken for tests, stopping container only after all the tests are run
-class RandomPeopleServiceSpec extends AnyWordSpec with Matchers {
+class PeoplePopulatorServiceSpec extends AnyWordSpec with Matchers {
 
   val container: KafkaContainer = KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.7.0"))
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  "RandomPeopleService.populateTopic" should {
+  "PeoplePopulatorService.populateTopic" should {
     "populate with list of people" when {
       "the list is provided" in {
         val topicName = s"people-${UUID.randomUUID()}"
@@ -34,7 +34,7 @@ class RandomPeopleServiceSpec extends AnyWordSpec with Matchers {
         val records = List(defaultPerson, secondPerson)
 
         withKafka(container, topicName) { producer =>
-          new DefaultRandomPeopleService[IO](producer).populateTopic(records, topicName).unsafeRunSync()
+          new DefaultPeoplePopulatorService[IO](producer).populateTopic(records, topicName).unsafeRunSync()
           val noOfMessages = readMessages(container.bootstrapServers, topicName).unsafeRunSync()
 
           noOfMessages must contain theSameElementsAs records
@@ -48,7 +48,7 @@ class RandomPeopleServiceSpec extends AnyWordSpec with Matchers {
         val emptyRecords = List.empty
 
         withKafka(container, topicName) { producer =>
-          new DefaultRandomPeopleService[IO](producer).populateTopic(emptyRecords, topicName).unsafeRunSync()
+          new DefaultPeoplePopulatorService[IO](producer).populateTopic(emptyRecords, topicName).unsafeRunSync()
           val noOfMessages = readMessages(container.bootstrapServers, topicName).unsafeRunSync().size
           noOfMessages mustBe 0
         }

@@ -8,11 +8,11 @@ import com.condukt.api.producer.model.{Person, PersonSerializer}
 import org.apache.kafka.common.serialization.StringSerializer
 import cats.syntax.all._
 
-trait RandomPeopleService[F[_]] {
+trait PeoplePopulatorService[F[_]] {
   def populateTopic(topic: String, filePath: String): F[Unit]
 }
 
-class DefaultRandomPeopleService[F[_]: Sync](producer: KafkaProducer[String, Person]) {
+class DefaultPeoplePopulatorService[F[_]: Sync](producer: KafkaProducer[String, Person]) {
 
   def populateTopic(people: List[Person], topic: String): F[Unit] = {
     val sendActions: List[F[Unit]] = people.map { person =>
