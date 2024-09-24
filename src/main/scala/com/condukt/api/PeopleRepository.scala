@@ -7,6 +7,7 @@ import org.apache.kafka.common.{KafkaFuture, TopicPartition}
 import org.apache.kafka.clients.consumer.KafkaConsumer
 
 import java.time.Duration
+import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
@@ -41,15 +42,31 @@ class KafkaPeopleRepository[F[_]: Sync](adminClient: AdminClient, kafkaConsumer:
             }
         maybePeople match {
           case Success(_) =>
-            kafkaConsumer
-              .poll(Duration.ofMillis(500))
-              .asScala
+            getRecords(List.empty, count)
               .take(count)
-              .map(_.value())
           case Failure(exception) =>
             println(s"${exception.getMessage}")
             Seq.empty
         }
     }.toList
+  }
+
+  @tailrec
+  private def getRecords(people: List[Person], count: Int): List[Person] = {
+    if(people.size >= count) {
+      people
+    } else {
+      val morePeople =
+        kafkaConsumer
+          .poll(Duration.ofMillis(500))
+          .asScala
+          .map(_.value())
+          .toList
+      if(morePeople.isEmpty) {
+        people
+      } else {
+        getRecords(people ++ morePeople, count)
+      }
+    }
   }
 }

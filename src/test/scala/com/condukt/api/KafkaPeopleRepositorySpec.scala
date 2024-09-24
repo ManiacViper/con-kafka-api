@@ -6,7 +6,7 @@ import com.condukt.api.KafkaPeopleRepositorySpec._
 import com.condukt.api.producer.model.{Person, PersonDeserializer, PersonSerializer, PersonSpec}
 import com.dimafeng.testcontainers.KafkaContainer
 import org.apache.kafka.clients.admin.{AdminClient, AdminClientConfig, NewTopic}
-import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
 import org.scalatest.Assertion
@@ -91,12 +91,13 @@ object KafkaPeopleRepositorySpec {
   private def testConsumer(bootstrapServers: String): Resource[IO, KafkaConsumer[String, Person]] = Resource.make {
     IO {
       val props = new Properties()
-      props.put("bootstrap.servers", bootstrapServers)
-      props.put("group.id", "test-repository-consumer-group")
-      props.put("key.deserializer", classOf[StringDeserializer].getName)
-      props.put("value.deserializer", classOf[PersonDeserializer].getName)
-      props.put("enable.auto.commit", "false")
-      props.put("auto.offset.reset", "earliest")
+      props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
+      props.put(ConsumerConfig.GROUP_ID_CONFIG, "test-repository-consumer-group")
+      props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
+      props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[PersonDeserializer].getName)
+      props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
+      props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+      props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 10)
 
       new KafkaConsumer[String, Person](props)
     }
