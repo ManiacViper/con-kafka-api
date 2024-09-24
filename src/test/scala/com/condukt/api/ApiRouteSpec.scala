@@ -16,13 +16,6 @@ class ApiRouteSpec extends CatsEffectSuite {
     assertIO(returnPeople.map(_.status) ,Status.Ok)
   }
 
-  test("topic endpoint defaults when offset and count are not provided") {
-    val Right(expected) = parse(mockPeopleJsonString)
-    def actual(value: String) = parse(value).getOrElse(Json.Null)
-
-    assertIO(returnPeople.flatMap(_.as[String].map(actual)), expected)
-  }
-
   test("topic returns people") {
     val Right(expected) = parse(mockPeopleJsonString)
     def actual(value: String) = parse(value).getOrElse(Json.Null)
