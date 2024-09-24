@@ -19,12 +19,9 @@ import java.util.Properties
 
 class KafkaPeopleRepositorySpec extends AnyWordSpec with Matchers {
 
-  val logger: Logger = LoggerFactory.getLogger(this.getClass)
-
   "KafkaPeopleRepository.getPeople" should {
     "return people" when {
       "they exist as records in the topic" in {
-        logger.info("Hello there kenneth")
         val secondPerson = PersonSpec.defaultPerson.copy("2222222222222222")
         val thirdPerson = PersonSpec.defaultPerson.copy("333333333333333")
         val people = List(PersonSpec.defaultPerson, secondPerson, thirdPerson)
@@ -97,7 +94,7 @@ object KafkaPeopleRepositorySpec {
       props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[PersonDeserializer].getName)
       props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
       props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-      props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 10)
+      props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1)
 
       new KafkaConsumer[String, Person](props)
     }
