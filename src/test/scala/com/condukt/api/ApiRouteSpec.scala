@@ -13,18 +13,25 @@ import munit.CatsEffectSuite
 class ApiRouteSpec extends CatsEffectSuite {
 
   test("topic returns status code 200") {
-    assertIO(retHelloWorld.map(_.status) ,Status.Ok)
+    assertIO(returnPeople.map(_.status) ,Status.Ok)
   }
 
-  test("topic returns hello people message") {
+  test("topic endpoint defaults when offset and count are not provided") {
     val Right(expected) = parse(mockPeopleJsonString)
     def actual(value: String) = parse(value).getOrElse(Json.Null)
 
-    assertIO(retHelloWorld.flatMap(_.as[String].map(actual)), expected)
+    assertIO(returnPeople.flatMap(_.as[String].map(actual)), expected)
   }
 
-  private[this] val retHelloWorld: IO[Response[IO]] = {
-    val getPeople = Request[IO](Method.GET, uri"/topic/people/10?count=5")
+  test("topic returns people") {
+    val Right(expected) = parse(mockPeopleJsonString)
+    def actual(value: String) = parse(value).getOrElse(Json.Null)
+
+    assertIO(returnPeople.flatMap(_.as[String].map(actual)), expected)
+  }
+
+  private[this] val returnPeople: IO[Response[IO]] = {
+    val getPeople = Request[IO](Method.GET, uri"/topic/people")
     val mockPeopleResult = List(PersonSpec.defaultPerson, PersonSpec.defaultPerson.copy(_id = "111YCC2THQH1QAEH"))
     val repositoryStub = new PeopleRepository[IO]{
       override def getPeople(topicName: String, offset: Long, count: Int): IO[Seq[Person]] =
